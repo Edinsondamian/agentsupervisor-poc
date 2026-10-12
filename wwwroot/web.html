@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+    <title>ASISTENTE DE EVALUACIÓN CREDITICIA</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
+    <link rel="stylesheet" href="/style/style.css?v=2">
+</head>
+
+<body>
+
+    <div id="chat-app" class="chat-app">
+
+        <div class="chat-app_toggle toggle">
+
+            <div class="icon send">
+
+                <i class="fas fa-paper-plane"></i>
+
+            </div>
+
+            <div class="icon open">
+
+                <i class="fas fa-comment"></i>
+
+            </div>
+
+        </div>
+
+        <div class="chat-app_head">
+
+            <div class="close hide"></div>
+
+        </div>
+
+        <div class="chat-app_box">
+
+            <div class="chat-app_header">
+
+                <div class="branding">
+
+                    <div class="content">
+
+                        <p class="title">EVALUACIÓN CREDITICIA</p>
+
+                        <p class="subtitle">Asistente IA</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="chat-app_content" id="chat-app_content">
+
+            </div>
+
+            <div class="chat-app_attachments" id="chat-app_attachments"></div>
+
+            <div class="chat-app_footer">
+
+                <button id="attach-button" class="attach-button" aria-label="Adjuntar documento" title="Adjuntar documento">
+
+                    <i class="fas fa-paperclip"></i>
+
+                </button>
+
+                <input type="text" id="chat-input" placeholder="Escribe tu consulta..."
+                       autocomplete="off" maxlength="4000" aria-label="Mensaje" />
+
+                <button id="send-button" class="send-button" aria-label="Enviar">
+
+                    <i class="fas fa-paper-plane"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <input type="file" id="file-input" accept="application/pdf,.pdf,image/png,.png,image/jpeg,.jpg,.jpeg" multiple hidden />
+
+    <script src="/js/script.js?v=2"></script>
+</body>
+</html>

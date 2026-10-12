@@ -1,0 +1,27 @@
+# Build
+bin/
+obj/
+publish/
+*.pubxml.user
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.DS_Store
+
+# Logs y resultados
+logs/
+*.log
+TestResults/
+[Ll]ogs/
+
+# NuGet
+*.nupkg
+.nuget/
+
+# Secretos locales (usar dotnet user-secrets)
+appsettings.*.local.json
+*.env
