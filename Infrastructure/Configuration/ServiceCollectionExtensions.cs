@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDocumentOcrService, DocumentIntelligenceReader>();
         services.AddSingleton<IAttachmentStore, AttachmentStore>();
         services.AddSingleton<IFoundryAgentRegistry, FoundryAgentRegistry>();
-        services.AddScoped<IAgentOrchestration, AgentOrchestrationService>();
+        services.AddSingleton<IAgentOrchestration, AgentOrchestrationService>();
 
         return services;
     }

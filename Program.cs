@@ -1,12 +1,20 @@
+using agentsupervisorpoc.Application.Agents;
 using agentsupervisorpoc.Application.Interfaces;
+using agentsupervisorpoc.Application.Services;
 using agentsupervisorpoc.Infrastructure.Configuration;
 using agentsupervisorpoc.Infrastructure.Services;
 using agentsupervisorpoc.Models;
+using Microsoft.Agents.Authentication.Msal;
+using Microsoft.Agents.Hosting.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAgentSupervisorSolution(builder.Configuration);
 builder.Services.AddHealthChecks();
+builder.Services.AddHttpClient();
+
+builder.Services.AddDefaultMsalAuth(builder.Configuration);
+builder.AddAgent<CreditEvaluationBot>();
 
 var app = builder.Build();
 
@@ -20,11 +28,95 @@ if (string.IsNullOrWhiteSpace(app.Configuration["AzureOpenAI:Endpoint"]))
 
 var defaultFiles = new DefaultFilesOptions();
 defaultFiles.DefaultFileNames.Clear();
-defaultFiles.DefaultFileNames.Add("web.html");
+defaultFiles.DefaultFileNames.Add("directline.html");
 app.UseDefaultFiles(defaultFiles);
 app.UseStaticFiles();
 
+app.MapGet("/local", () => Results.Redirect("/local.html"));
+
+app.MapAgentEndpoints(requireAuth: false);
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapPost("/v3/conversations/{convId}/activities/{actId}", async (
+        string convId,
+        string actId,
+        HttpContext http,
+        ILogger<Program> log) =>
+    {
+        using var reader = new StreamReader(http.Request.Body);
+        var body = await reader.ReadToEndAsync();
+
+        var text = "(sin texto)";
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("text", out var t))
+                text = t.GetString() ?? "(sin texto)";
+        }
+        catch
+        {
+        }
+
+        log.LogInformation("=== RESPUESTA DEL AGENTE === Conv={Conv} | {Text}", convId, text);
+        return Results.Ok();
+    });
+}
+
 app.MapHealthChecks("/health");
+
+app.MapGet("/api/directline/token", async (
+    IConfiguration config,
+    IHttpClientFactory httpClientFactory,
+    ILogger<Program> logger,
+    CancellationToken ct) =>
+{
+    var secret = config["Directline:Root"];
+    if (string.IsNullOrWhiteSpace(secret))
+        return Results.Json(
+            new { error = "DirectLine no está configurado. Registre el bot en Azure Bot Service (endpoint /api/messages), habilite el canal DirectLine y configure el secreto: dotnet user-secrets set \"Directline:Root\" \"<secreto>\"." },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+
+    var baseUrl = (config["DirectlineToken:Url"] ?? "https://directline.botframework.com").TrimEnd('/');
+    var userId = "dl_" + Guid.NewGuid().ToString("N");
+
+    try
+    {
+        var http = httpClientFactory.CreateClient();
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/v3/directline/tokens/generate")
+        {
+            Content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(new { user = new { id = userId } }),
+                System.Text.Encoding.UTF8,
+                "application/json")
+        };
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", secret);
+
+        using var response = await http.SendAsync(request, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Token DirectLine rechazado: {Status} {Body}",
+                (int)response.StatusCode, body);
+            return Results.Json(
+                new { error = "No se pudo generar el token de DirectLine (secreto inválido o canal no habilitado)." },
+                statusCode: StatusCodes.Status502BadGateway);
+        }
+
+        var token = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("token").GetString();
+        return Results.Ok(new { token, userId });
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error generando token de DirectLine.");
+        return Results.Json(
+            new { error = "Error generando el token de DirectLine." },
+            statusCode: StatusCodes.Status500InternalServerError);
+    }
+});
 
 app.MapPost("/api/chat", async (
     ChatRequest request,
@@ -44,7 +136,7 @@ app.MapPost("/api/chat", async (
         var joinContext = await state.GetOrCreateAsync(joinSessionId);
 
         return Results.Ok(new ChatResponse(
-            joinContext.SessionId, BuildWelcomeMessage(config), "WelcomePipeline"));
+            joinContext.SessionId, WelcomeService.Build(config), "WelcomePipeline"));
     }
 
     var hasAttachments = request?.AttachmentIds is { Count: > 0 };
@@ -64,17 +156,9 @@ app.MapPost("/api/chat", async (
     var context = await state.GetOrCreateAsync(sessionId, ct);
     var resolvedAttachments = attachments.Resolve(request.AttachmentIds);
 
-    if (resolvedAttachments.Count > AttachmentStore.MaxFilesPerMessage)
-        return Results.BadRequest(new
-        {
-            error = $"Máximo {AttachmentStore.MaxFilesPerMessage} documentos por mensaje."
-        });
-
-    if (resolvedAttachments.Select(a => a.Kind).Distinct().Count() > 1)
-        return Results.BadRequest(new
-        {
-            error = "Solo puedes enviar PDF o imágenes, no ambos."
-        });
+    var validationError = AttachmentStore.ValidateForMessage(resolvedAttachments);
+    if (validationError is not null)
+        return Results.BadRequest(new { error = validationError });
 
     try
     {
@@ -164,21 +248,3 @@ app.MapPost("/api/attachments", async (
 });
 
 app.Run();
-
-static string BuildWelcomeMessage(IConfiguration config)
-{
-    var texto = config["MensajesBienvenida:Saludo"]
-        ?? "Soy el Asistente de Evaluación Crediticia. ¿Empezamos?";
-
-    var peru = TimeZoneInfo.FindSystemTimeZoneById("America/Lima");
-    var ahora = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, peru);
-
-    var saludo = ahora.Hour switch
-    {
-        >= 5 and < 12 => "Buenos días",
-        >= 12 and < 19 => "Buenas tardes",
-        _ => "Buenas noches"
-    };
-
-    return $"¡Hola! 👋 {saludo}. {texto}";
-}

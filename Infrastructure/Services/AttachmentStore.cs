@@ -3,22 +3,13 @@ using System.Text;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Models;
 using Microsoft.Extensions.Logging;
-using UglyToad.PdfPig;
 
 namespace agentsupervisorpoc.Infrastructure.Services;
-
-public enum TextExtractionSource
-{
-    None,
-    Digital,
-    Ocr
-}
 
 public sealed class AttachmentStore : IAttachmentStore
 {
     public const int MaxAttachmentBytes = 5 * 1024 * 1024;
     public const int MaxExtractedChars = 15000;
-    public const int MinDigitalChars = 30;
     public const int MaxFilesPerMessage = 10;
 
     private static readonly byte[] PdfHeader = Encoding.ASCII.GetBytes("%PDF-");
@@ -26,12 +17,12 @@ public sealed class AttachmentStore : IAttachmentStore
     private static readonly byte[] JpegHeader = { 0xFF, 0xD8, 0xFF };
 
     private readonly ConcurrentDictionary<string, AttachmentInfo> _attachments = new();
-    private readonly IDocumentOcrService _ocr;
+    private readonly IDocumentOcrService _documentIntelligence;
     private readonly ILogger<AttachmentStore> _logger;
 
-    public AttachmentStore(IDocumentOcrService ocr, ILogger<AttachmentStore> logger)
+    public AttachmentStore(IDocumentOcrService documentIntelligence, ILogger<AttachmentStore> logger)
     {
-        _ocr = ocr;
+        _documentIntelligence = documentIntelligence;
         _logger = logger;
     }
 
@@ -53,10 +44,7 @@ public sealed class AttachmentStore : IAttachmentStore
                 $"El archivo supera el límite de {MaxAttachmentBytes / (1024 * 1024)} MB.");
 
         var kind = DetectKind(buffer);
-
-        var (text, source) = kind == "pdf"
-            ? await ExtractPdfTextAsync(buffer, cancellationToken)
-            : await ExtractImageTextAsync(buffer, cancellationToken);
+        var text = await ExtractTextAsync(buffer, cancellationToken);
 
         var info = new AttachmentInfo
         {
@@ -70,7 +58,9 @@ public sealed class AttachmentStore : IAttachmentStore
 
         _logger.LogInformation(
             "[Adjuntos] Documento guardado: '{Name}' ({SizeKB} KB, tipo={Kind}, {Chars} chars, fuente={Source}). SessionId={SessionId}, FileId={FileId}",
-            info.Name, info.SizeBytes / 1024, kind, info.ExtractedChars, source, sessionId, info.FileId);
+            info.Name, info.SizeBytes / 1024, kind, info.ExtractedChars,
+            string.IsNullOrWhiteSpace(text) ? "sin-texto" : "Document Intelligence",
+            sessionId, info.FileId);
 
         return info;
     }
@@ -89,6 +79,32 @@ public sealed class AttachmentStore : IAttachmentStore
         return resolved;
     }
 
+    public static string? ValidateForMessage(IReadOnlyList<AttachmentInfo> attachments)
+    {
+        if (attachments.Count > MaxFilesPerMessage)
+            return $"Máximo {MaxFilesPerMessage} documentos por mensaje.";
+
+        if (attachments.Select(a => a.Kind).Distinct().Count() > 1)
+            return "Solo puedes enviar PDF o imágenes, no ambos.";
+
+        return null;
+    }
+
+    private async Task<string?> ExtractTextAsync(
+        MemoryStream document,
+        CancellationToken cancellationToken)
+    {
+        var text = await _documentIntelligence.ExtractTextAsync(document, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        if (text.Length > MaxExtractedChars)
+            text = text[..MaxExtractedChars];
+
+        return text;
+    }
+
     private static string DetectKind(MemoryStream buffer)
     {
         var header = new byte[8];
@@ -102,74 +118,5 @@ public sealed class AttachmentStore : IAttachmentStore
             return "imagen";
 
         throw new InvalidDataException("El archivo no es un PDF ni una imagen (JPG/PNG) válida.");
-    }
-
-    private async Task<(string? Text, TextExtractionSource Source)> ExtractPdfTextAsync(
-        MemoryStream pdf,
-        CancellationToken cancellationToken)
-    {
-        var digital = TryExtractDigitalText(pdf);
-
-        if (!string.IsNullOrWhiteSpace(digital) && digital.Trim().Length >= MinDigitalChars)
-            return (digital, TextExtractionSource.Digital);
-
-        var ocr = await _ocr.ExtractTextAsync(pdf, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(ocr))
-        {
-            if (ocr.Length > MaxExtractedChars)
-                ocr = ocr[..MaxExtractedChars];
-
-            return (ocr, TextExtractionSource.Ocr);
-        }
-
-        if (!string.IsNullOrEmpty(digital))
-            return (digital, TextExtractionSource.Digital);
-
-        return (null, TextExtractionSource.None);
-    }
-
-    private async Task<(string? Text, TextExtractionSource Source)> ExtractImageTextAsync(
-        MemoryStream image,
-        CancellationToken cancellationToken)
-    {
-        var ocr = await _ocr.ExtractTextAsync(image, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(ocr))
-            return (null, TextExtractionSource.None);
-
-        if (ocr.Length > MaxExtractedChars)
-            ocr = ocr[..MaxExtractedChars];
-
-        return (ocr, TextExtractionSource.Ocr);
-    }
-
-    private string? TryExtractDigitalText(MemoryStream pdf)
-    {
-        try
-        {
-            var sb = new StringBuilder();
-            pdf.Position = 0;
-            using var document = PdfDocument.Open(pdf);
-            foreach (var page in document.GetPages())
-            {
-                sb.AppendLine(string.Join(" ", page.GetWords()));
-                if (sb.Length >= MaxExtractedChars)
-                    break;
-            }
-
-            if (sb.Length == 0)
-                return null;
-
-            if (sb.Length > MaxExtractedChars)
-                sb.Length = MaxExtractedChars;
-
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex,
-                "[Adjuntos] No se pudo extraer texto digital del PDF.");
-            return null;
-        }
     }
 }

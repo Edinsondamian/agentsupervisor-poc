@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+    <title>ASISTENTE DE EVALUACIÓN CREDITICIA · DirectLine</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css">
+    <link rel="stylesheet" href="/style/style.css?v=2">
+    <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
+
+    <style>
+        .chat-app_content {
+            padding: 0;
+        }
+
+        #webchat {
+            height: 100%;
+            width: 100%;
+        }
+
+        .dl-attach {
+            position: absolute;
+            right: 78px;
+            bottom: 14px;
+            height: 2.5em;
+            width: 2.5em;
+            border: solid 1px var(--celeste-claro);
+            border-radius: 10px;
+            background: var(--blanco);
+            color: var(--celeste-fuerte);
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(2, 119, 189, 0.2);
+        }
+
+        .dl-attach:hover {
+            box-shadow: 0 8px 16px rgba(41, 182, 246, 0.4);
+            border-color: var(--celeste);
+        }
+
+        .dl-error {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6em;
+            color: var(--celeste-oscuro);
+            text-align: center;
+            padding: 2em;
+            font-size: 0.85em;
+            background: var(--celeste-fondo);
+        }
+
+        .dl-error i {
+            font-size: 2em;
+            color: var(--celeste-fuerte);
+        }
+
+        .dl-error p {
+            margin: 0;
+            max-width: 300px;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="chat-app" class="chat-app">
+
+        <div class="chat-app_toggle toggle">
+
+            <div class="icon send">
+
+                <i class="fas fa-paper-plane"></i>
+
+            </div>
+
+            <div class="icon open">
+
+                <i class="fas fa-comment"></i>
+
+            </div>
+
+        </div>
+
+        <div class="chat-app_head">
+
+            <div class="close hide"></div>
+
+        </div>
+
+        <div class="chat-app_box">
+
+            <div class="chat-app_header">
+
+                <div class="branding">
+
+                    <div class="content">
+
+                        <p class="title">EVALUACIÓN CREDITICIA</p>
+
+                        <p class="subtitle">Asistente IA · DirectLine</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="chat-app_content" id="chat-app_content">
+
+                <div id="webchat" role="main"></div>
+
+                <div id="dl-error" class="dl-error hide">
+
+                    <i class="fas fa-plug"></i>
+
+                    <p><strong>Canal DirectLine no disponible</strong></p>
+
+                </div>
+
+                <button id="dl-attach" class="dl-attach hide" aria-label="Adjuntar documento" title="Adjuntar documento (PDF o imagen)">
+
+                    <i class="fas fa-paperclip"></i>
+
+                </button>
+
+                <input type="file" id="dl-file-input" accept="application/pdf,.pdf,image/png,.png,image/jpeg,.jpg,.jpeg" multiple hidden />
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="/js/directline.js?v=4"></script>
+</body>
+</html>
