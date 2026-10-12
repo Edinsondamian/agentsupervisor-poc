@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Infrastructure.Configuration;
+using agentsupervisorpoc.Infrastructure.Plugins;
 using agentsupervisorpoc.Models;
 using AgentReply = agentsupervisorpoc.Models.AgentResponse;
 
@@ -13,11 +15,16 @@ public sealed class OrchestratorAgent : ISpecializedAgent
     public string AgentName => "OrchestratorAgent";
 
     private readonly AgentFactory _factory;
+    private readonly FoundryAgentsPlugin _foundryAgents;
     private readonly ILogger<OrchestratorAgent> _logger;
 
-    public OrchestratorAgent(AgentFactory factory, ILogger<OrchestratorAgent> logger)
+    public OrchestratorAgent(
+        AgentFactory factory,
+        FoundryAgentsPlugin foundryAgents,
+        ILogger<OrchestratorAgent> logger)
     {
         _factory = factory;
+        _foundryAgents = foundryAgents;
         _logger = logger;
     }
 
@@ -30,7 +37,10 @@ public sealed class OrchestratorAgent : ISpecializedAgent
 
         try
         {
-            var agent = _factory.BuildAgent(AgentName);
+            var agent = _factory.BuildAgent(AgentName,
+            [
+                AIFunctionFactory.Create(_foundryAgents.ValidarCreditoAsync)
+            ]);
 
             var session = await RestoreOrCreateSessionAsync(agent, context, cancellationToken);
 

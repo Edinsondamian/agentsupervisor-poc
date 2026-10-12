@@ -41,7 +41,7 @@ app.MapPost("/api/chat", async (
             ? Guid.NewGuid().ToString()
             : request.SessionId!;
 
-        var joinContext = state.GetOrCreate(joinSessionId);
+        var joinContext = await state.GetOrCreateAsync(joinSessionId);
 
         return Results.Ok(new ChatResponse(
             joinContext.SessionId, BuildWelcomeMessage(config), "WelcomePipeline"));
@@ -61,7 +61,7 @@ app.MapPost("/api/chat", async (
         ? Guid.NewGuid().ToString()
         : request.SessionId!;
 
-    var context = state.GetOrCreate(sessionId);
+    var context = await state.GetOrCreateAsync(sessionId, ct);
     var resolvedAttachments = attachments.Resolve(request.AttachmentIds);
 
     if (resolvedAttachments.Count > AttachmentStore.MaxFilesPerMessage)
@@ -140,7 +140,7 @@ app.MapPost("/api/attachments", async (
     if (string.IsNullOrWhiteSpace(sessionId))
         sessionId = Guid.NewGuid().ToString();
 
-    var context = state.GetOrCreate(sessionId);
+    var context = await state.GetOrCreateAsync(sessionId, ct);
 
     try
     {

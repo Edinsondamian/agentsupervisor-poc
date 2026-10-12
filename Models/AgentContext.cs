@@ -9,6 +9,8 @@ public sealed class AgentContext
     public Dictionary<string, string> AgentSessionState { get; init; } = new();
 
     public List<DomainMessage> ConversationThread { get; init; } = new();
+
+    public string? LastDocumentContent { get; set; }
 }
 
 public sealed class DomainMessage

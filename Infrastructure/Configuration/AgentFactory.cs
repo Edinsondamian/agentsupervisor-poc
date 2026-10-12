@@ -69,7 +69,7 @@ public sealed class AgentFactory
 
     public IChatClient ChatClient => _chatClient.Value;
 
-    public ChatClientAgent BuildAgent(string agentName)
+    public ChatClientAgent BuildAgent(string agentName, IEnumerable<AITool>? tools = null)
         => new ChatClientAgent(
             ChatClient,
             new ChatClientAgentOptions
@@ -80,8 +80,10 @@ public sealed class AgentFactory
                 {
                     Instructions = BuildInstructions(agentName),
                     Temperature = ResolveTemperature(agentName),
-                    MaxOutputTokens = _config.GetValue<int?>("AgentSettings:MaxResponseTokens")
-                }            },
+                    MaxOutputTokens = _config.GetValue<int?>("AgentSettings:MaxResponseTokens"),
+                    Tools = tools?.ToList()
+                }
+            },
             _loggerFactory,
             services: null);
 

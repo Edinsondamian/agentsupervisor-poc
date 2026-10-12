@@ -8,12 +8,12 @@ public sealed class InMemoryConversationState : IConversationState
 {
     private readonly ConcurrentDictionary<string, AgentContext> _sessions = new();
 
-    public AgentContext GetOrCreate(string sessionId) =>
-        _sessions.GetOrAdd(sessionId, id => new AgentContext
+    public Task<AgentContext> GetOrCreateAsync(string sessionId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_sessions.GetOrAdd(sessionId, id => new AgentContext
         {
             SessionId = id,
             Channel = "webchat"
-        });
+        }));
 
     public Task SaveAsync(AgentContext context, CancellationToken cancellationToken = default)
     {

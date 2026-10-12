@@ -30,7 +30,7 @@ public interface IPromptProvider
 
 public interface IConversationState
 {
-    AgentContext GetOrCreate(string sessionId);
+    Task<AgentContext> GetOrCreateAsync(string sessionId, CancellationToken cancellationToken = default);
 
     Task SaveAsync(AgentContext context, CancellationToken cancellationToken = default);
 }

@@ -9,7 +9,7 @@ const AppConfig = {
     maxFiles: 10
 };
 
-let sessionId = sessionStorage.getItem('crediteval-session');
+let sessionId = null;
 let joinSent = false;
 let isWaiting = false;
 let isUploading = false;
@@ -207,7 +207,6 @@ async function uploadAttachment(file) {
 
         if (data.sessionId && !sessionId) {
             sessionId = data.sessionId;
-            sessionStorage.setItem('crediteval-session', sessionId);
         }
 
         chip.dataset.fileId = data.fileId;
@@ -328,7 +327,6 @@ async function sendMessage() {
 
         if (data.sessionId) {
             sessionId = data.sessionId;
-            sessionStorage.setItem('crediteval-session', sessionId);
         }
 
         appendMessage('bot', data.content || '(sin respuesta)');
@@ -357,7 +355,6 @@ async function sendJoinEvent() {
         if (res.ok && data.content) {
             if (data.sessionId) {
                 sessionId = data.sessionId;
-                sessionStorage.setItem('crediteval-session', sessionId);
             }
             appendMessage('bot', data.content);
         }
