@@ -15,36 +15,14 @@
     <style>
         .chat-app_content {
             padding: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         #webchat {
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             width: 100%;
-        }
-
-        .dl-attach {
-            position: absolute;
-            right: 78px;
-            bottom: 14px;
-            height: 2.5em;
-            width: 2.5em;
-            border: solid 1px var(--celeste-claro);
-            border-radius: 10px;
-            background: var(--blanco);
-            color: var(--celeste-fuerte);
-            font-size: 1em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            z-index: 10;
-            box-shadow: 0 4px 12px rgba(2, 119, 189, 0.2);
-        }
-
-        .dl-attach:hover {
-            box-shadow: 0 8px 16px rgba(41, 182, 246, 0.4);
-            border-color: var(--celeste);
         }
 
         .dl-error {
@@ -132,13 +110,32 @@
 
                 </div>
 
-                <button id="dl-attach" class="dl-attach hide" aria-label="Adjuntar documento" title="Adjuntar documento (PDF o imagen)">
+                <div id="dl-typing" class="dl-typing hide">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+
+            </div>
+
+            <div class="chat-app_attachments" id="chat-app_attachments"></div>
+
+            <div class="chat-app_footer">
+
+                <button id="attach-button" class="attach-button" aria-label="Adjuntar documento" title="Adjuntar documento (PDF o imagen)">
 
                     <i class="fas fa-paperclip"></i>
 
                 </button>
 
-                <input type="file" id="dl-file-input" accept="application/pdf,.pdf,image/png,.png,image/jpeg,.jpg,.jpeg" multiple hidden />
+                <input type="text" id="chat-input" placeholder="Escribe tu consulta..."
+                       autocomplete="off" maxlength="4000" aria-label="Mensaje" />
+
+                <button id="send-button" class="send-button" aria-label="Enviar">
+
+                    <i class="fas fa-paper-plane"></i>
+
+                </button>
 
             </div>
 
@@ -146,6 +143,8 @@
 
     </div>
 
-    <script src="/js/directline.js?v=4"></script>
+    <input type="file" id="file-input" accept="application/pdf,.pdf,image/png,.png,image/jpeg,.jpg,.jpeg" multiple hidden />
+
+    <script src="/js/directline.js?v=6"></script>
 </body>
 </html>

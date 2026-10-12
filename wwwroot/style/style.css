@@ -596,6 +596,39 @@ body {
     }
 }
 
+.dl-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.5em 1em;
+    margin: 0.25em 0 0.5em 1em;
+    background: linear-gradient(90deg, var(--celeste), var(--celeste-fuerte));
+    border-radius: 15px;
+    border-top-left-radius: 3px;
+    width: fit-content;
+    max-width: calc(100% - 2em);
+}
+
+.dl-typing .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 100%;
+    background-color: var(--blanco);
+    margin-right: 4px;
+    opacity: 0.4;
+    animation: typing-dot 1.2s infinite;
+}
+
+.dl-typing .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dl-typing .dot:nth-child(3) {
+    animation-delay: 0.4s;
+    margin-right: 0;
+}
+
 .hide {
     display: none;
 }
