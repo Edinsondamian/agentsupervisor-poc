@@ -36,33 +36,6 @@ app.MapGet("/local", () => Results.Redirect("/local.html"));
 
 app.MapAgentEndpoints(requireAuth: false);
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapPost("/v3/conversations/{convId}/activities/{actId}", async (
-        string convId,
-        string actId,
-        HttpContext http,
-        ILogger<Program> log) =>
-    {
-        using var reader = new StreamReader(http.Request.Body);
-        var body = await reader.ReadToEndAsync();
-
-        var text = "(sin texto)";
-        try
-        {
-            var doc = System.Text.Json.JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("text", out var t))
-                text = t.GetString() ?? "(sin texto)";
-        }
-        catch
-        {
-        }
-
-        log.LogInformation("=== RESPUESTA DEL AGENTE === Conv={Conv} | {Text}", convId, text);
-        return Results.Ok();
-    });
-}
-
 app.MapHealthChecks("/health");
 
 app.MapGet("/api/directline/token", async (

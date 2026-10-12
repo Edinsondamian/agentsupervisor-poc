@@ -2,7 +2,6 @@ using System.ComponentModel;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Infrastructure.Configuration;
 using agentsupervisorpoc.Infrastructure.Foundry;
-using Microsoft.Extensions.Logging;
 
 namespace agentsupervisorpoc.Infrastructure.Plugins;
 

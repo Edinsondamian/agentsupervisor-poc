@@ -1,8 +1,5 @@
 using System.Collections.Concurrent;
 using Azure.AI.Extensions.OpenAI;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using OpenAI.Responses;
 using System.ClientModel;
 using System.ClientModel.Primitives;
 

@@ -1,6 +1,4 @@
 using System.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using agentsupervisorpoc.Application.Agents;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Infrastructure.Configuration;

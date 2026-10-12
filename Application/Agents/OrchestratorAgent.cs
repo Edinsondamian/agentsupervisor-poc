@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Infrastructure.Configuration;
 using agentsupervisorpoc.Infrastructure.Plugins;

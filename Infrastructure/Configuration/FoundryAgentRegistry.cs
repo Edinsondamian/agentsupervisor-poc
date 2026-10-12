@@ -1,7 +1,5 @@
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace agentsupervisorpoc.Infrastructure.Configuration;
 

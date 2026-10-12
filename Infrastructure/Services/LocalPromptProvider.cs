@@ -1,5 +1,4 @@
 using agentsupervisorpoc.Application.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace agentsupervisorpoc.Infrastructure.Services;
 

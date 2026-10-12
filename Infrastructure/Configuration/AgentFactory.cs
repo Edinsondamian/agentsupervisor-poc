@@ -3,8 +3,6 @@ using Azure.AI.OpenAI;
 using Azure.Core;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using OpenAI;
 using System.ClientModel;
 using agentsupervisorpoc.Application.Interfaces;

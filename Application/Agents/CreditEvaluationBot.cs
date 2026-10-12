@@ -1,9 +1,6 @@
-using System.Net.Http;
 using Microsoft.Agents.Builder;
 using Microsoft.Agents.Builder.Compat;
 using Microsoft.Agents.Core.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Application.Services;
 using agentsupervisorpoc.Infrastructure.Services;

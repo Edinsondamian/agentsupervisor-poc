@@ -1,8 +1,6 @@
 using Azure;
 using Azure.AI.DocumentIntelligence;
 using agentsupervisorpoc.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace agentsupervisorpoc.Infrastructure.Services;
 

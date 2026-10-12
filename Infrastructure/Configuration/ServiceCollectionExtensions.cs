@@ -5,8 +5,6 @@ using agentsupervisorpoc.Application.Services;
 using agentsupervisorpoc.Infrastructure.Foundry;
 using agentsupervisorpoc.Infrastructure.Plugins;
 using agentsupervisorpoc.Infrastructure.Services;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace agentsupervisorpoc.Infrastructure.Configuration;
 

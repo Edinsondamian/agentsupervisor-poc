@@ -2,8 +2,6 @@ using System.Collections.Concurrent;
 using Azure.Storage.Blobs;
 using agentsupervisorpoc.Application.Interfaces;
 using agentsupervisorpoc.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace agentsupervisorpoc.Infrastructure.Services;
 
