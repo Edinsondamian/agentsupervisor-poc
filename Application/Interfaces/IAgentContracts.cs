@@ -57,3 +57,19 @@ public interface IDocumentOcrService
 {
     Task<string?> ExtractTextAsync(Stream pdfContent, CancellationToken cancellationToken = default);
 }
+
+public interface IWhatsAppMediaClient
+{
+    Task<(Stream Content, string FileName, string MimeType)> DownloadAsync(
+        string mediaId,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IWhatsAppSender
+{
+    Task<bool> SendTextAsync(
+        string number,
+        string? name,
+        string text,
+        CancellationToken cancellationToken = default);
+}

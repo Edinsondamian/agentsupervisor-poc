@@ -220,4 +220,130 @@ app.MapPost("/api/attachments", async (
     }
 });
 
+app.MapGet("/api/whatsapp", (IConfiguration config, HttpContext http) =>
+{
+    var verifyToken = config["WhatsApp:VerifyToken"];
+    if (string.IsNullOrWhiteSpace(verifyToken))
+        return Results.Json(
+            new { error = "WhatsApp:VerifyToken no está configurado." },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+
+    var mode = http.Request.Query["hub.mode"].ToString();
+    var token = http.Request.Query["hub.verify_token"].ToString();
+    var challenge = http.Request.Query["hub.challenge"].ToString();
+
+    return mode == "subscribe" && token == verifyToken && !string.IsNullOrWhiteSpace(challenge)
+        ? Results.Text(challenge)
+        : Results.Forbid();
+});
+
+app.MapPost("/api/whatsapp", async (
+    WhatsAppCloudModel? cloud,
+    IConfiguration config,
+    IConversationState state,
+    IAttachmentStore attachmentStore,
+    IWhatsAppMediaClient mediaClient,
+    IWhatsAppSender sender,
+    IAgentOrchestration orchestration,
+    ILogger<Program> logger,
+    CancellationToken ct) =>
+{
+    try
+    {
+        var value = cloud?.Entry?.FirstOrDefault()?.Changes?.FirstOrDefault()?.Value;
+        var message = value?.Messages?.FirstOrDefault();
+
+        if (message is null || string.IsNullOrWhiteSpace(message.From))
+        {
+            logger.LogInformation("[WhatsApp] Webhook recibido sin mensaje procesable.");
+            return Results.Text("EVENT_RECEIVED");
+        }
+
+        var name = value!.Contacts?.FirstOrDefault()?.Profile?.Name;
+        var sessionId = message.From;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                string reply;
+
+                switch (message.Type)
+                {
+                    case "document":
+                    case "image":
+                        var mediaId = message.DocumentMediaId;
+                        if (string.IsNullOrWhiteSpace(mediaId))
+                        {
+                            await sender.SendTextAsync(sessionId, name,
+                                "El documento que enviaste no pude descargarlo. Inténtalo nuevamente, por favor.", ct);
+                            return;
+                        }
+
+                        var (content, fileName, _) = await mediaClient.DownloadAsync(mediaId, ct);
+                        await using (content)
+                        {
+                            var context2 = await state.GetOrCreateAsync(sessionId, ct);
+                            AttachmentInfo info;
+                            try
+                            {
+                                info = await attachmentStore.SaveAsync(context2.SessionId, fileName, content, ct);
+                            }
+                            catch (InvalidDataException ex)
+                            {
+                                await sender.SendTextAsync(sessionId, name, ex.Message, ct);
+                                return;
+                            }
+
+                            var resolved = attachmentStore.Resolve(new[] { info.FileId });
+                            var docResponse = await orchestration.ProcessAsync(string.Empty, context2, resolved, ct);
+                            reply = docResponse.Content;
+                        }
+                        break;
+
+                    case "text":
+                    case "interactive":
+                        var isInteractive = string.Equals(message.Type, "interactive", StringComparison.OrdinalIgnoreCase);
+                        var userText = isInteractive
+                            ? (message.Interactive?.ButtonReply?.Title
+                               ?? message.Interactive?.ListReply?.Title
+                               ?? message.Text?.Body
+                               ?? string.Empty)
+                            : (message.Text?.Body ?? string.Empty);
+
+                        if (string.IsNullOrWhiteSpace(userText))
+                            return;
+
+                        var context = await state.GetOrCreateAsync(sessionId, ct);
+                        var response = await orchestration.ProcessAsync(userText, context, null, ct);
+                        reply = response.Content;
+                        break;
+
+                    default:
+                        await sender.SendTextAsync(sessionId, name,
+                            "Aún solo puedo procesar texto y documentos en PDF o imágenes (JPG/PNG). " +
+                            "Envíame tu documento de Solicitud de Crédito, por favor.", ct);
+                        return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(reply))
+                    await sender.SendTextAsync(sessionId, name, reply, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[WhatsApp] Error procesando mensaje de {From}.", message.From);
+                await sender.SendTextAsync(message.From, name,
+                    config["MensajesError:ErrorGeneral"] ?? "Error procesando la consulta.", ct);
+            }
+        }, ct);
+
+        return Results.Text("EVENT_RECEIVED");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "[WhatsApp] Error leyendo el webhook.");
+        return Results.Text("EVENT_RECEIVED");
+    }
+});
+
 app.Run();

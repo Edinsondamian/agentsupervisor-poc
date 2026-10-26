@@ -39,6 +39,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFoundryAgentRegistry, FoundryAgentRegistry>();
         services.AddSingleton<IAgentOrchestration, AgentOrchestrationService>();
 
+        services.AddSingleton<IWhatsAppMediaClient, WhatsAppMediaClient>();
+        services.AddSingleton<IWhatsAppSender, WhatsAppSender>();
+
         return services;
     }
 }
