@@ -112,7 +112,15 @@ public sealed class AgentOrchestrationService : IAgentOrchestration
 
         try
         {
+            _logger.LogInformation(
+                "[Documentacion] Texto extraído por Document Intelligence que se envía al agente '{Agent}' ({Chars} chars):\n{Content}",
+                agent.AgentId, documentContent.Length, documentContent);
+
             var output = await _foundryAgentClient.RunAsync(agent.AgentId, documentContent, cancellationToken);
+
+            _logger.LogInformation(
+                "[Documentacion] Respuesta del agente '{Agent}':\n{Output}",
+                agent.AgentId, output);
 
             return string.IsNullOrWhiteSpace(output)
                 ? null
