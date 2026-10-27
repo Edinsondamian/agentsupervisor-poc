@@ -295,6 +295,9 @@ app.MapPost("/api/whatsapp", async (
                                 return;
                             }
 
+                            await sender.SendTextAsync(sessionId, name,
+                                "⏳ ¡Gracias! Estamos analizando tu documento, esto puede tomar unos segundos. Por favor, espera…", ct);
+
                             var resolved = attachmentStore.Resolve(new[] { info.FileId });
                             var docResponse = await orchestration.ProcessAsync(string.Empty, context2, resolved, ct);
                             reply = docResponse.Content;
